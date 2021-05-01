@@ -137,7 +137,7 @@ def main():
         shocked = pd.DataFrame(zip(shock_pp, shock_p, shock_l), columns=['ppg', 'ecg', 'voltage'])
         shocked = shocked.astype({"ecg":'float', "ppg":'float', "voltage":'float'})
         
-        readings=shocked['ppg']
+        readings=shocked['ecg']
         
         filter_signal = final_filter(readings, fs, order)
         filter_signal = normalize(filter_signal) 
