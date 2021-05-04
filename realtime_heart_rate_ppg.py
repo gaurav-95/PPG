@@ -12,10 +12,11 @@ import requests
 import pandas as pd
 from apscheduler.scheduler import Scheduler
 from scipy.signal import butter, iirnotch, lfilter, find_peaks
+from itertools import repeat
 
 sched = Scheduler()
 sched.start()
-
+            
 def flatten(List_2D):
     List_flat=[]
     for i in range(len(List_2D)): #Traversing through the main list
@@ -24,22 +25,17 @@ def flatten(List_2D):
     return List_flat
 
 def get_foxes(data):
-    peaks, _ = find_peaks(data, height=0)
+    peaks, _ = find_peaks(data, prominence = 0.2,  distance=5, height=0)
     return peaks
 
 def heart_rate(peaks):
     tot_peaks=len(peaks)
-    #print("Total number of peaks:", tot_peaks)
-    per_second=(tot_peaks/2)/timediff
-    #print("\nSystolic peaks (BPS):",per_second)
-    heart_rate=per_second*60
+    heart_rate=tot_peaks
     #print("\nHeart Rate (BPM):", heart_rate)
-    
     return heart_rate
 
 def normalize(readings):
     readings = (readings-min(readings))/(max(readings)-min(readings))
-    
     return readings
 
 ## A high pass filter allows frequencies higher than a cut-off value
@@ -84,11 +80,11 @@ def final_filter(data, fs, order):
     z = lfilter(f, e, y)     
     return z
 
-timediff=60
+timediff=59
 fs = 25
-cutoff_high = 2.5
-cutoff_low = 1
-powerline = 0.9
+cutoff_high = 2.4
+cutoff_low = 0.7
+powerline = 1
 order = 3
 
 secret_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiJkZWJhbmphbiIsImlhdCI6MTYxNjY0NjA3OH0.Tfyog7lHPADpickUc1itaxdC_fs4_eAxLQDY3G9C5Z4"
@@ -115,29 +111,31 @@ def main():
     
     for i in user:
         user_data = requests.get("https://apiserverparentprotect.herokuapp.com/get-data?secret_token="+secret_token+"&type=heart_rate_voltage&dateFrom="+from_time+"&dateTo="+to_time+"&userID="+i)
-        heart_data = user_data.json()
-        tot=len(heart_data['data'])
+        heart_data = user_data.json()['data']
+        tot=len(heart_data)
         #print(tot)
         
-        shock_pp=[]
-        shock_p=[]
-        shock_l=[]
+        pp=[]
+        p=[]
+        l=[]
         times=[]
         
-        for j in range(tot):
-            shock_pp.append(heart_data['data'][j]['heart_rate_voltage']['PP'])
-            shock_p.append(heart_data['data'][j]['heart_rate_voltage']['P'])
-            shock_l.append(heart_data['data'][j]['heart_rate_voltage']['L'])
-            times.append(heart_data['data'][j]['timestamp'])
+        for i in range(tot):
+            heart_data[i]['heart_rate_voltage']['values'].pop(0)
+            l.append(heart_data[i]['heart_rate_voltage']['values'][0::3])
+            pp.append(heart_data[i]['heart_rate_voltage']['values'][1::3])
+            p.append(heart_data[i]['heart_rate_voltage']['values'][2::3])
+            times.extend(repeat(heart_data[i]['timestamp'], 25))
         
-        shock_pp=flatten(shock_pp)
-        shock_p=flatten(shock_p)
-        shock_l=flatten(shock_l)
+        ppg_l=flatten(pp)
+        ppg_h=flatten(p)
         
-        shocked = pd.DataFrame(zip(shock_pp, shock_p, shock_l), columns=['ppg', 'ecg', 'voltage'])
-        shocked = shocked.astype({"ecg":'float', "ppg":'float', "voltage":'float'})
+        ppgrec = pd.DataFrame(zip(ppg_l, ppg_h, times), columns=['ppg', 'ppg_h', 'times'])
+        ppgrec = ppgrec.astype({"ppg":'float', "ppg_h":'float'})
+        ppgrec['times'] = pd.to_datetime(ppgrec['times'])
+        #print(ppgrec)
         
-        readings=shocked['ecg']
+        readings = ppgrec['ppg']
         
         filter_signal = final_filter(readings, fs, order)
         filter_signal = normalize(filter_signal) 
