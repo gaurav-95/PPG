@@ -25,7 +25,7 @@ def flatten(List_2D):
     return List_flat
 
 def get_foxes(data):
-    peaks, _ = find_peaks(data, prominence = 0.2,  distance=5, height=0)
+    peaks, _ = find_peaks(data, prominence = 0.3,  distance=5, height=0)
     return peaks
 
 def heart_rate(peaks):
@@ -85,7 +85,7 @@ fs = 25
 cutoff_high = 2.4
 cutoff_low = 0.7
 powerline = 1
-order = 3
+order = 5
 
 secret_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiJkZWJhbmphbiIsImlhdCI6MTYxNjY0NjA3OH0.Tfyog7lHPADpickUc1itaxdC_fs4_eAxLQDY3G9C5Z4"
 
@@ -118,21 +118,21 @@ def main():
         pp=[]
         p=[]
         l=[]
-        times=[]
+        #times=[]
         
         for i in range(tot):
             heart_data[i]['heart_rate_voltage']['values'].pop(0)
             l.append(heart_data[i]['heart_rate_voltage']['values'][0::3])
             pp.append(heart_data[i]['heart_rate_voltage']['values'][1::3])
             p.append(heart_data[i]['heart_rate_voltage']['values'][2::3])
-            times.extend(repeat(heart_data[i]['timestamp'], 25))
+            #times.extend(repeat(heart_data[i]['timestamp'], 25))
         
         ppg_l=flatten(pp)
         ppg_h=flatten(p)
         
-        ppgrec = pd.DataFrame(zip(ppg_l, ppg_h, times), columns=['ppg', 'ppg_h', 'times'])
+        ppgrec = pd.DataFrame(zip(ppg_l, ppg_h), columns=['ppg', 'ppg_h'])
         ppgrec = ppgrec.astype({"ppg":'float', "ppg_h":'float'})
-        ppgrec['times'] = pd.to_datetime(ppgrec['times'])
+        #ppgrec['times'] = pd.to_datetime(ppgrec['times'])
         #print(ppgrec)
         
         readings = ppgrec['ppg']
