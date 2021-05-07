@@ -12,7 +12,7 @@ import requests
 import pandas as pd
 from apscheduler.scheduler import Scheduler
 from scipy.signal import butter, iirnotch, lfilter, find_peaks
-from itertools import repeat
+#from itertools import repeat
 
 sched = Scheduler()
 sched.start()
@@ -31,7 +31,6 @@ def get_foxes(data):
 def heart_rate(peaks):
     tot_peaks=len(peaks)
     heart_rate=tot_peaks
-    #print("\nHeart Rate (BPM):", heart_rate)
     return heart_rate
 
 def normalize(readings):
@@ -120,12 +119,12 @@ def main():
         l=[]
         #times=[]
         
-        for i in range(tot):
-            heart_data[i]['heart_rate_voltage']['values'].pop(0)
-            l.append(heart_data[i]['heart_rate_voltage']['values'][0::3])
-            pp.append(heart_data[i]['heart_rate_voltage']['values'][1::3])
-            p.append(heart_data[i]['heart_rate_voltage']['values'][2::3])
-            #times.extend(repeat(heart_data[i]['timestamp'], 25))
+        for j in range(tot):
+            heart_data[j]['heart_rate_voltage']['values'].pop(0)
+            l.append(heart_data[j]['heart_rate_voltage']['values'][0::3])
+            pp.append(heart_data[j]['heart_rate_voltage']['values'][1::3])
+            p.append(heart_data[j]['heart_rate_voltage']['values'][2::3])
+            #times.extend(repeat(heart_data[j]['timestamp'], 25))
         
         ppg_l=flatten(pp)
         ppg_h=flatten(p)
